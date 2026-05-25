@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { @apply bg-gray-50 text-gray-800; font-family: 'Segoe UI', sans-serif; }
+
+.btn { @apply px-4 py-2 rounded-lg text-sm font-medium transition-colors; }
+.btn-primary { @apply btn bg-primary text-white hover:bg-primary-dark; }
+.btn-secondary { @apply btn border border-gray-300 bg-white hover:bg-gray-50; }
+.btn-danger { @apply btn bg-red-500 text-white hover:bg-red-600; }
+.btn-sm { @apply px-3 py-1.5 text-xs; }
+
+.input { @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent; }
+.label { @apply block text-xs font-medium text-gray-600 mb-1; }
+
+.card { @apply bg-white rounded-xl border border-gray-200 overflow-hidden; }
+.card-header { @apply px-4 py-3 border-b border-gray-100 font-medium text-sm flex items-center justify-between; }
+
+.table-wrap { @apply overflow-x-auto; }
+table { @apply w-full text-sm; }
+thead th { @apply px-4 py-2.5 text-left text-xs font-medium text-gray-500 bg-gray-50 border-b border-gray-100; }
+tbody td { @apply px-4 py-3 border-b border-gray-50 text-gray-700; }
+tbody tr:hover td { @apply bg-gray-50; }
+tbody tr:last-child td { @apply border-b-0; }
+
+.badge { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium; }
+.badge-green { @apply bg-green-50 text-green-700; }
+.badge-blue { @apply bg-blue-50 text-blue-700; }
+.badge-amber { @apply bg-amber-50 text-amber-700; }
+.badge-red { @apply bg-red-50 text-red-700; }
+.badge-gray { @apply bg-gray-100 text-gray-600; }
+
+.stat-card { @apply bg-white rounded-xl border border-gray-200 p-4; }
+.page-title { @apply text-lg font-semibold text-gray-900 mb-4; }
+.section { @apply mb-6; }

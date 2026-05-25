@@ -1,0 +1,327 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Branch {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  address     String?
+  phone       String?
+  email       String?
+  manager     String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  users       User[]
+  inventory   Inventory[]
+  sales       Sale[]
+  purchases   Purchase[]
+  customers   Customer[]
+  quotations  Quotation[]
+  @@map("branches")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id])
+  branchId  Int?
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  auditLogs AuditLog[]
+  @@map("users")
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  description String?
+  users       User[]
+  permissions RolePermission[]
+  @@map("roles")
+}
+
+model Permission {
+  id      Int              @id @default(autoincrement())
+  module  String
+  action  String
+  roles   RolePermission[]
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  contact   String?
+  phone     String?
+  email     String?
+  address   String?
+  grade     String   @default("일반")
+  balance   Decimal  @default(0)
+  branchId  Int?
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
+  invoices  Invoice[]
+  payments  Payment[]
+  quotations Quotation[]
+  @@map("customers")
+}
+
+model Supplier {
+  id           Int       @id @default(autoincrement())
+  name         String
+  contact      String?
+  phone        String?
+  email        String?
+  address      String?
+  paymentTerms String    @default("30일")
+  balance      Decimal   @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  purchases    Purchase[]
+  @@map("suppliers")
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  parentId Int?
+  parent   Category? @relation("SubCategories", fields: [parentId], references: [id])
+  children Category[] @relation("SubCategories")
+  products Product[]
+  @@map("categories")
+}
+
+model Product {
+  id            Int         @id @default(autoincrement())
+  partNo        String      @unique
+  brand         String?
+  name          String
+  categoryId    Int?
+  category      Category?   @relation(fields: [categoryId], references: [id])
+  unit          String      @default("개")
+  cost          Decimal     @default(0)
+  aPrice        Decimal     @default(0)
+  bPrice        Decimal     @default(0)
+  cPrice        Decimal     @default(0)
+  carBrand      String?
+  carModel      String?
+  carYear       String?
+  notes         String?
+  minStock      Int         @default(10)
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  inventory     Inventory[]
+  saleItems     SaleItem[]
+  purchaseItems PurchaseItem[]
+  quotationItems QuotationItem[]
+  @@map("products")
+}
+
+model Inventory {
+  id          Int       @id @default(autoincrement())
+  productId   Int
+  branchId    Int
+  quantity    Int       @default(0)
+  location    String?
+  product     Product   @relation(fields: [productId], references: [id])
+  branch      Branch    @relation(fields: [branchId], references: [id])
+  updatedAt   DateTime  @updatedAt
+  @@unique([productId, branchId])
+  @@map("inventory")
+}
+
+model Sale {
+  id           Int        @id @default(autoincrement())
+  saleNo       String     @unique
+  customerId   Int
+  branchId     Int
+  customer     Customer   @relation(fields: [customerId], references: [id])
+  branch       Branch     @relation(fields: [branchId], references: [id])
+  saleDate     DateTime   @default(now())
+  totalAmount  Decimal    @default(0)
+  paidAmount   Decimal    @default(0)
+  status       String     @default("대기")
+  notes        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  items        SaleItem[]
+  invoices     Invoice[]
+  ledgerEntries Ledger[]
+  @@map("sales")
+}
+
+model SaleItem {
+  id        Int     @id @default(autoincrement())
+  saleId    Int
+  productId Int
+  quantity  Int
+  unitPrice Decimal
+  subtotal  Decimal
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+  @@map("sale_items")
+}
+
+model Purchase {
+  id           Int            @id @default(autoincrement())
+  purchaseNo   String         @unique
+  supplierId   Int
+  branchId     Int
+  supplier     Supplier       @relation(fields: [supplierId], references: [id])
+  branch       Branch         @relation(fields: [branchId], references: [id])
+  purchaseDate DateTime       @default(now())
+  totalAmount  Decimal        @default(0)
+  paidAmount   Decimal        @default(0)
+  status       String         @default("대기")
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  items        PurchaseItem[]
+  ledgerEntries Ledger[]
+  payments     Payment[]
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id         Int      @id @default(autoincrement())
+  purchaseId Int
+  productId  Int
+  quantity   Int
+  unitPrice  Decimal
+  subtotal   Decimal
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+  @@map("purchase_items")
+}
+
+model Quotation {
+  id              Int             @id @default(autoincrement())
+  quoteNo         String          @unique
+  customerId      Int?
+  branchId        Int
+  customer        Customer?       @relation(fields: [customerId], references: [id])
+  branch          Branch          @relation(fields: [branchId], references: [id])
+  totalAmount     Decimal         @default(0)
+  status          String          @default("Draft")
+  expiresAt       DateTime?
+  notes           String?
+  convertedSaleId Int?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  items           QuotationItem[]
+  @@map("quotations")
+}
+
+model QuotationItem {
+  id           Int       @id @default(autoincrement())
+  quotationId  Int
+  productId    Int
+  quantity     Int
+  unitPrice    Decimal
+  subtotal     Decimal
+  quotation    Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  product      Product   @relation(fields: [productId], references: [id])
+  @@map("quotation_items")
+}
+
+model Ledger {
+  id          Int       @id @default(autoincrement())
+  date        DateTime  @default(now())
+  type        String
+  description String
+  debit       Decimal   @default(0)
+  credit      Decimal   @default(0)
+  balance     Decimal   @default(0)
+  saleId      Int?
+  purchaseId  Int?
+  sale        Sale?     @relation(fields: [saleId], references: [id])
+  purchase    Purchase? @relation(fields: [purchaseId], references: [id])
+  createdAt   DateTime  @default(now())
+  @@map("ledger")
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @default(now())
+  category    String
+  description String
+  amount      Decimal
+  createdAt   DateTime @default(now())
+  @@map("expenses")
+}
+
+model Invoice {
+  id         Int      @id @default(autoincrement())
+  invoiceNo  String   @unique
+  saleId     Int
+  customerId Int
+  amount     Decimal
+  dueDate    DateTime
+  status     String   @default("미결제")
+  sale       Sale     @relation(fields: [saleId], references: [id])
+  customer   Customer @relation(fields: [customerId], references: [id])
+  payments   Payment[]
+  createdAt  DateTime @default(now())
+  @@map("invoices")
+}
+
+model Payment {
+  id           Int       @id @default(autoincrement())
+  date         DateTime  @default(now())
+  type         String
+  method       String    @default("현금")
+  amount       Decimal
+  customerId   Int?
+  purchaseId   Int?
+  invoiceId    Int?
+  customer     Customer? @relation(fields: [customerId], references: [id])
+  purchase     Purchase? @relation(fields: [purchaseId], references: [id])
+  invoice      Invoice?  @relation(fields: [invoiceId], references: [id])
+  createdAt    DateTime  @default(now())
+  @@map("payments")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  action    String
+  module    String
+  detail    String?
+  ip        String?
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  @@map("audit_logs")
+}
+
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+  @@map("settings")
+}
